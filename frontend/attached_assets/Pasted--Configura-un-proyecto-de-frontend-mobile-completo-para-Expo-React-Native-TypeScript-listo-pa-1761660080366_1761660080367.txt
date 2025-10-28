@@ -1,0 +1,105 @@
+⚙️ Configura un proyecto de frontend mobile completo para Expo + React Native + TypeScript, listo para ejecutarse correctamente en Replit con plan gratuito.
+
+El proyecto corresponde a una Running Tracker App, con estructura modular y buenas prácticas de desarrollo.
+
+🧱 Requisitos funcionales (basados en Bolt.new)
+
+Estructura base dentro de src/:
+
+screens/      → HomeScreen, RunSessionScreen, SummaryScreen, SettingsScreen
+components/   → botones, tarjetas, elementos reutilizables
+navigation/   → react-navigation (Stack + Bottom Tabs)
+hooks/        → useAuth, useLocationTracking
+store/        → store.ts + slices (authSlice, runSlice)
+services/     → api.ts, locationService.ts
+theme/        → esquema de colores, tipografía global (DM Sans), estilos
+types/        → interfaces y DTOs compartidos
+
+
+Pantallas iniciales (pueden ser placeholders con dummy data):
+
+HomeScreen: historial de carreras.
+
+RunSessionScreen: botón iniciar/detener, mapa, distancia, tiempo, velocidad.
+
+SummaryScreen: resumen carrera (distancia total, duración, ritmo promedio).
+
+SettingsScreen: configuración de usuario básica.
+
+Autenticación (estructura preparada):
+
+AuthStack con OnboardingScreen, LoginScreen, RegisterScreen.
+
+Hook useAuth() que devuelva { isLoggedIn, login, logout } (isLoggedIn boolean mock, false por defecto).
+
+Navegación principal: si isLoggedIn es false → AuthStack, si true → MainTabsNavigator.
+
+Navegación inferior: Tabs → Home, Run, Summary, Settings.
+
+UI y estilos:
+
+UI Kitten + Eva Design System
+
+Tipografía: DM Sans
+
+Colores primarios: rosa #DC3760, fondo blanco, texto gris oscuro
+
+Dependencias principales:
+
+expo, react-native, typescript
+@reduxjs/toolkit, react-redux
+react-hook-form, zod
+react-navigation (stack + bottom-tabs)
+expo-location, expo-task-manager
+react-native-maps
+axios, dayjs
+@ui-kitten/components, @eva-design/eva
+
+
+Código limpio y modular, con comentarios breves en funciones principales.
+
+⚙️ Configuración específica para Replit
+
+Archivos raíz:
+
+.replit
+
+run = "npm run start"
+language = "typescript"
+hidden = ["node_modules", "build", ".expo"]
+
+
+replit.nix
+
+{ pkgs }: {
+  deps = [
+    pkgs.nodejs-18_x
+    pkgs.watchman
+  ];
+}
+
+
+package.json (scripts):
+
+{
+  "scripts": {
+    "start": "expo start --tunnel",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "lint": "eslint ."
+  }
+}
+
+
+README.md: breve guía de ejecución en Replit y local.
+
+Optimización para plan gratuito:
+
+Evitar procesos pesados en background
+
+Túnel Expo para conexión externa
+
+🏁 Objetivo final
+
+Proyecto base listo para exportar a GitHub o continuar desarrollo, con estructura modular completa, pantallas placeholders funcionales y navegación configurada, y compatibilidad total con Replit gratuito.

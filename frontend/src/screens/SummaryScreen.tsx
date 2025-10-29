@@ -68,7 +68,7 @@ export const SummaryScreen: React.FC = () => {
   };
   
   return (
-    <Layout style={styles.container}>
+    <Layout style={[styles.container, { paddingTop: Platform.OS === 'android' ? Math.max(insets.top, 44) : insets.top }]}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <Text category="h3">Your Statistics</Text>
@@ -188,7 +188,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-    paddingTop: 60,
   },
   header: {
     marginBottom: 24,

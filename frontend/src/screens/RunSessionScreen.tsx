@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store/store';
 import { startRun, stopRun, pauseRun, resumeRun, saveRunToBackend } from '../store/runSlice';
 import { useLocationTracking } from '../hooks/useLocationTracking';
+import { useAutoStart } from '../hooks/useAutoStart';
 import { Run } from '../types';
 import MapView, { Polyline, PROVIDER_DEFAULT, Region } from 'react-native-maps';
 
@@ -15,6 +16,16 @@ export const RunSessionScreen: React.FC = () => {
   const { currentRun, isTracking } = useSelector((state: RootState) => state.run);
   const { user } = useSelector((state: RootState) => state.auth);
   const { permissionGranted, currentLocation } = useLocationTracking();
+  
+  // Hook de autoStart
+  const { 
+    isMonitoring, 
+    movementDetected, 
+    movementIntensity, 
+    isWaitingForAutoStart,
+    autoStartEnabled 
+  } = useAutoStart();
+  
   const [elapsedTime, setElapsedTime] = useState(0);
   const [mapRegion, setMapRegion] = useState<Region>({
     latitude: 37.78825,
@@ -204,6 +215,29 @@ export const RunSessionScreen: React.FC = () => {
             </Text>
           </View>
         </View>
+        
+        {/* Indicador de AutoStart */}
+        {autoStartEnabled && !currentRun && (
+          <View style={styles.autoStartIndicator}>
+            <View style={[
+              styles.autoStartDot, 
+              { backgroundColor: isMonitoring ? (movementDetected ? '#4CAF50' : '#FFC107') : '#9E9E9E' }
+            ]} />
+            <Text category="c2" appearance="hint" style={styles.autoStartText}>
+              {isMonitoring 
+                ? (isWaitingForAutoStart 
+                    ? 'Detectando actividad...' 
+                    : (movementDetected ? 'Movimiento detectado' : 'Auto-start activo'))
+                : 'Auto-start deshabilitado'
+              }
+            </Text>
+            {movementDetected && (
+              <Text category="c2" appearance="hint" style={styles.intensityText}>
+                Intensidad: {Math.round(movementIntensity * 100)}%
+              </Text>
+            )}
+          </View>
+        )}
       </View>
       
       <View style={styles.controls}>
@@ -301,5 +335,30 @@ const styles = StyleSheet.create({
   controlButton: {
     flex: 1,
     marginHorizontal: 8,
+  },
+  autoStartIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 20,
+  },
+  autoStartDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  autoStartText: {
+    fontSize: 12,
+    marginRight: 8,
+  },
+  intensityText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#4CAF50',
   },
 });

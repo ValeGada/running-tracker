@@ -1,20 +1,38 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, View, ScrollView, Platform } from 'react-native';
 import { Button, Card, Layout, Text, Toggle } from '@ui-kitten/components';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../hooks/useAuth';
+import { useSettings } from '../hooks/useSettings';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store/store';
 
 export const SettingsScreen: React.FC = () => {
   const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
-  const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
-  const [darkModeEnabled, setDarkModeEnabled] = React.useState(false);
-  const [autoStartEnabled, setAutoStartEnabled] = React.useState(false);
-  
+  const { 
+    settings, 
+    loading, 
+    updateSetting,
+    autoStartEnabled,
+    notificationsEnabled,
+    darkModeEnabled 
+  } = useSettings();
+
   const handleLogout = async () => {
     await logout();
+  };
+
+  const handleAutoStartToggle = async (checked: boolean) => {
+    await updateSetting('autoStart', checked);
+  };
+
+  const handleNotificationsToggle = async (checked: boolean) => {
+    await updateSetting('notifications', checked);
+  };
+
+  const handleDarkModeToggle = async (checked: boolean) => {
+    await updateSetting('darkMode', checked);
   };
   
   return (
@@ -62,7 +80,8 @@ export const SettingsScreen: React.FC = () => {
             </View>
             <Toggle
               checked={notificationsEnabled}
-              onChange={setNotificationsEnabled}
+              onChange={handleNotificationsToggle}
+              disabled={loading}
             />
           </View>
           
@@ -75,8 +94,8 @@ export const SettingsScreen: React.FC = () => {
             </View>
             <Toggle
               checked={darkModeEnabled}
-              onChange={setDarkModeEnabled}
-              disabled
+              onChange={handleDarkModeToggle}
+              disabled={true} // Mantener deshabilitado hasta implementar
             />
           </View>
           
@@ -84,12 +103,13 @@ export const SettingsScreen: React.FC = () => {
             <View style={styles.settingInfo}>
               <Text category="s1">Auto-start Tracking</Text>
               <Text category="c1" appearance="hint">
-                Start tracking automatically
+                Start tracking automatically when movement is detected
               </Text>
             </View>
             <Toggle
               checked={autoStartEnabled}
-              onChange={setAutoStartEnabled}
+              onChange={handleAutoStartToggle}
+              disabled={loading}
             />
           </View>
         </Card>
@@ -134,7 +154,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-    paddingTop: 60,
   },
   header: {
     marginBottom: 24,

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, FlatList, ScrollView, Alert } from 'react-native';
-import { Button, Card, Layout, Text, Modal, Icon } from '@ui-kitten/components';
+import { Button, Card, Layout, Text, Icon } from '@ui-kitten/components';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../store/store';
 import { setRuns, deleteRunFromBackend, removeRun } from '../store/runSlice';
@@ -8,6 +8,7 @@ import { runApi } from '../services/api';
 import dayjs from 'dayjs';
 import { Run } from '../types';
 import { TouchableOpacity } from 'react-native';
+import { GenericModal } from '../components';
 
 export const HomeScreen: React.FC = () => {
   const dispatch = useDispatch();
@@ -197,41 +198,15 @@ export const HomeScreen: React.FC = () => {
         />
       )}
 
-      <Modal
+      <GenericModal
+        preset="delete"
         visible={deleteModalVisible}
-        backdropStyle={styles.backdrop}
+        runToDelete={runToDelete}
+        onConfirm={confirmDeleteRun}
+        onCancel={cancelDeleteRun}
+        formatDuration={formatDuration}
         onBackdropPress={cancelDeleteRun}
-      >
-        <Card disabled={true} style={styles.modal}>
-          <Text category="h6" style={styles.modalTitle}>
-            Confirmar eliminación
-          </Text>
-          <Text category="s1" style={styles.modalText}>
-            ¿Estás seguro de que quieres eliminar esta sesión de running?
-          </Text>
-          {runToDelete && (
-            <Text category="s2" style={styles.modalRunInfo}>
-              {dayjs(runToDelete.startTime).format('DD/MM/YYYY HH:mm')} - {formatDuration(runToDelete.duration)}
-            </Text>
-          )}
-          <View style={styles.modalButtons}>
-            <Button
-              style={styles.modalButton}
-              appearance="ghost"
-              onPress={cancelDeleteRun}
-            >
-              Cancelar
-            </Button>
-            <Button
-              style={styles.modalButton}
-              status="danger"
-              onPress={confirmDeleteRun}
-            >
-              Eliminar
-            </Button>
-          </View>
-        </Card>
-      </Modal>
+      />
     </Layout>
   );
 };
@@ -266,34 +241,6 @@ const styles = StyleSheet.create({
   deleteIcon: {
     width: 24,
     height: 24,
-  },
-  backdrop: {
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modal: {
-    margin: 20,
-    padding: 20,
-  },
-  modalTitle: {
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  modalText: {
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  modalRunInfo: {
-    marginBottom: 20,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  modalButton: {
-    flex: 1,
-    marginHorizontal: 8,
   },
   statsRow: {
     flexDirection: 'row',

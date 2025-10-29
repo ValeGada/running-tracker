@@ -61,7 +61,10 @@ const settingsSlice = createSlice({
   initialState,
   reducers: {
     // Actualizar configuración específica
-    updateSetting: (state, action: PayloadAction<{ key: keyof UserSettings; value: any }>) => {
+    updateSetting: <K extends keyof UserSettings>(
+      state: SettingsState, 
+      action: PayloadAction<{ key: K; value: UserSettings[K] }>
+    ) => {
       const { key, value } = action.payload;
       state.settings[key] = value;
     },

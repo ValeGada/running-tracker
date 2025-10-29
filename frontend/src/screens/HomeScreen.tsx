@@ -14,6 +14,9 @@ export const HomeScreen: React.FC = () => {
   const dispatch = useDispatch();
   const { runs, loading } = useSelector((state: RootState) => state.run);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [loadingModalVisible, setLoadingModalVisible] = useState(false);
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [runToDelete, setRunToDelete] = useState<Run | null>(null);
   const { user } = useSelector((state: RootState) => state.auth);
   
@@ -94,12 +97,27 @@ export const HomeScreen: React.FC = () => {
   const confirmDeleteRun = async () => {
     if (!runToDelete) return;
     
+    // Cerrar modal de confirmación y mostrar loading
+    setDeleteModalVisible(false);
+    setLoadingModalVisible(true);
+    
     try {
       await dispatch(deleteRunFromBackend(runToDelete.id) as any);
-      setDeleteModalVisible(false);
-      setRunToDelete(null);
+      
+      // Cerrar loading y mostrar éxito
+      setLoadingModalVisible(false);
+      setSuccessModalVisible(true);
+      
+      // Auto-cerrar modal de éxito después de 2 segundos
+      setTimeout(() => {
+        setSuccessModalVisible(false);
+        setRunToDelete(null);
+      }, 2000);
+      
     } catch (error) {
-      Alert.alert('Error', 'No se pudo eliminar la sesión de running');
+      setLoadingModalVisible(false);
+      setErrorModalVisible(true);
+      setRunToDelete(null);
     }
   };
 
@@ -206,6 +224,28 @@ export const HomeScreen: React.FC = () => {
         onCancel={cancelDeleteRun}
         formatDuration={formatDuration}
         onBackdropPress={cancelDeleteRun}
+      />
+
+      <GenericModal
+        preset="loader"
+        visible={loadingModalVisible}
+        message="Eliminando sesión de running..."
+      />
+
+      <GenericModal
+        preset="success"
+        visible={successModalVisible}
+        title="¡Eliminado!"
+        message="La sesión de running se eliminó correctamente"
+      />
+
+      <GenericModal
+        preset="error"
+        visible={errorModalVisible}
+        title="Error"
+        message="No se pudo eliminar la sesión de running. Inténtalo de nuevo."
+        onConfirm={() => setErrorModalVisible(false)}
+        confirmText="Aceptar"
       />
     </Layout>
   );

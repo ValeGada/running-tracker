@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
-import { Button, Layout, Text } from '@ui-kitten/components';
+import { Button, Layout, Text, useTheme } from '@ui-kitten/components';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store/store';
 import { startRun, stopRun, pauseRun, resumeRun, saveRunToBackend } from '../store/runSlice';
 import { useLocationTracking } from '../hooks/useLocationTracking';
 import { useAutoStart } from '../hooks/useAutoStart';
+import { useTheme as useAppTheme } from '../hooks/useTheme';
 import { Run } from '../types';
 import MapView, { Polyline, PROVIDER_DEFAULT, Region } from 'react-native-maps';
 
 export const RunSessionScreen: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const insets = useSafeAreaInsets();
+  const theme = useTheme();
+  const { isDarkMode } = useAppTheme();
   const { currentRun, isTracking } = useSelector((state: RootState) => state.run);
   const { user } = useSelector((state: RootState) => state.auth);
   const { permissionGranted, currentLocation } = useLocationTracking();
@@ -177,9 +180,9 @@ export const RunSessionScreen: React.FC = () => {
         </MapView>
       </View>
       
-      <View style={styles.statsContainer}>
+      <View style={[styles.statsContainer, { backgroundColor: theme['background-basic-color-1'] }]}>
         <View style={styles.mainStat}>
-          <Text category="h1" style={styles.mainStatValue}>
+          <Text category="h1" style={[styles.mainStatValue, { color: theme['color-primary-500'] }]}>
                   {currentRun ? (currentRun.distance?.toFixed(2) || '0.00') : '0.00'}
                 </Text>
           <Text category="s1" appearance="hint">
@@ -218,7 +221,10 @@ export const RunSessionScreen: React.FC = () => {
         
         {/* Indicador de AutoStart */}
         {autoStartEnabled && !currentRun && (
-          <View style={styles.autoStartIndicator}>
+          <View style={[
+            styles.autoStartIndicator, 
+            { backgroundColor: theme['background-basic-color-2'] }
+          ]}>
             <View style={[
               styles.autoStartDot, 
               { backgroundColor: isMonitoring ? (movementDetected ? '#4CAF50' : '#FFC107') : '#9E9E9E' }
@@ -240,7 +246,7 @@ export const RunSessionScreen: React.FC = () => {
         )}
       </View>
       
-      <View style={styles.controls}>
+      <View style={[styles.controls, { backgroundColor: theme['background-basic-color-1'] }]}>
         {!currentRun ? (
           <Button
             size="giant"
@@ -299,7 +305,7 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     padding: 20,
-    backgroundColor: 'white',
+    // backgroundColor se aplica dinámicamente
   },
   mainStat: {
     alignItems: 'center',
@@ -308,7 +314,7 @@ const styles = StyleSheet.create({
   mainStatValue: {
     fontSize: 56,
     fontWeight: 'bold',
-    color: '#DC3760',
+    // color se aplica dinámicamente
   },
   secondaryStats: {
     flexDirection: 'row',
@@ -323,7 +329,7 @@ const styles = StyleSheet.create({
   controls: {
     padding: 20,
     paddingBottom: 40,
-    backgroundColor: 'white',
+    // backgroundColor se aplica dinámicamente
   },
   startButton: {
     width: '100%',
@@ -343,7 +349,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: '#F5F5F5',
+    // backgroundColor se aplica dinámicamente
     borderRadius: 20,
   },
   autoStartDot: {

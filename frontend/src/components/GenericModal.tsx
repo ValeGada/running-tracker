@@ -1,8 +1,9 @@
 import React from 'react';
-import { StyleSheet, View, ActivityIndicator } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Button, Card, Text, Modal, Icon } from '@ui-kitten/components';
 import dayjs from 'dayjs';
 import { Run } from '../types';
+import { Spinner } from './Spinner';
 
 // Tipos de presets disponibles
 export type ModalPreset = 'delete' | 'loader' | 'success' | 'error' | 'confirmation';
@@ -110,7 +111,7 @@ export const GenericModal: React.FC<GenericModalProps> = (props) => {
         const loaderProps = props as LoaderProps;
         return (
           <View style={styles.loaderContent}>
-            <ActivityIndicator size="large" color="#DC3760" />
+            <Spinner size="large" />
             <Text category="s1" style={styles.loaderText}>
               {loaderProps.message || 'Cargando...'}
             </Text>

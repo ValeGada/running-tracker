@@ -1,11 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View, ScrollView, Platform } from 'react-native';
 import { Button, Card, Layout, Text, Toggle } from '@ui-kitten/components';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../hooks/useAuth';
 import { useSettings } from '../hooks/useSettings';
-import { useSelector } from 'react-redux';
-import { RootState } from '../store/store';
 
 export const SettingsScreen: React.FC = () => {
   const { user, logout } = useAuth();
@@ -19,20 +17,100 @@ export const SettingsScreen: React.FC = () => {
     darkModeEnabled 
   } = useSettings();
 
+  // Estados para controlar las animaciones de los toggles
+  const [pendingToggles, setPendingToggles] = useState<{
+    autoStart?: boolean;
+    notifications?: boolean;
+    darkMode?: boolean;
+  }>({});
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Función para obtener el valor actual del toggle (pendiente o real)
+  const getToggleValue = (type: 'autoStart' | 'notifications' | 'darkMode') => {
+    if (pendingToggles[type] !== undefined) {
+      return pendingToggles[type];
+    }
+    switch (type) {
+      case 'autoStart': return autoStartEnabled;
+      case 'notifications': return notificationsEnabled;
+      case 'darkMode': return darkModeEnabled;
+      default: return false;
+    }
+  };
+
+
+
   const handleLogout = async () => {
     await logout();
   };
 
   const handleAutoStartToggle = async (checked: boolean) => {
-    await updateSetting('autoStart', checked);
+    // Actualizar inmediatamente el estado pendiente
+    setPendingToggles(prev => ({ ...prev, autoStart: checked }));
+    setIsUpdating(true);
+    
+    try {
+      await updateSetting('autoStart', checked);
+      // Limpiar el estado pendiente después de la actualización exitosa
+      setPendingToggles(prev => {
+        const { autoStart, ...rest } = prev;
+        return rest;
+      });
+    } catch (error) {
+      // En caso de error, revertir el estado pendiente
+      setPendingToggles(prev => {
+        const { autoStart, ...rest } = prev;
+        return rest;
+      });
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleNotificationsToggle = async (checked: boolean) => {
-    await updateSetting('notifications', checked);
+    // Actualizar inmediatamente el estado pendiente
+    setPendingToggles(prev => ({ ...prev, notifications: checked }));
+    setIsUpdating(true);
+    
+    try {
+      await updateSetting('notifications', checked);
+      // Limpiar el estado pendiente después de la actualización exitosa
+      setPendingToggles(prev => {
+        const { notifications, ...rest } = prev;
+        return rest;
+      });
+    } catch (error) {
+      // En caso de error, revertir el estado pendiente
+      setPendingToggles(prev => {
+        const { notifications, ...rest } = prev;
+        return rest;
+      });
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleDarkModeToggle = async (checked: boolean) => {
-    await updateSetting('darkMode', checked);
+    // Actualizar inmediatamente el estado pendiente
+    setPendingToggles(prev => ({ ...prev, darkMode: checked }));
+    setIsUpdating(true);
+    
+    try {
+      await updateSetting('darkMode', checked);
+      // Limpiar el estado pendiente después de la actualización exitosa
+      setPendingToggles(prev => {
+        const { darkMode, ...rest } = prev;
+        return rest;
+      });
+    } catch (error) {
+      // En caso de error, revertir el estado pendiente
+      setPendingToggles(prev => {
+        const { darkMode, ...rest } = prev;
+        return rest;
+      });
+    } finally {
+      setIsUpdating(false);
+    }
   };
   
   return (
@@ -79,9 +157,9 @@ export const SettingsScreen: React.FC = () => {
               </Text>
             </View>
             <Toggle
-              checked={notificationsEnabled}
+              checked={getToggleValue('notifications')}
               onChange={handleNotificationsToggle}
-              disabled={loading}
+              disabled={loading || isUpdating}
             />
           </View>
           
@@ -89,13 +167,13 @@ export const SettingsScreen: React.FC = () => {
             <View style={styles.settingInfo}>
               <Text category="s1">Dark Mode</Text>
               <Text category="c1" appearance="hint">
-                Use dark theme (coming soon)
+                Switch between light and dark theme
               </Text>
             </View>
             <Toggle
-              checked={darkModeEnabled}
+              checked={getToggleValue('darkMode')}
               onChange={handleDarkModeToggle}
-              disabled={true} // Mantener deshabilitado hasta implementar
+              disabled={loading || isUpdating}
             />
           </View>
           
@@ -107,9 +185,9 @@ export const SettingsScreen: React.FC = () => {
               </Text>
             </View>
             <Toggle
-              checked={autoStartEnabled}
+              checked={getToggleValue('autoStart')}
               onChange={handleAutoStartToggle}
-              disabled={loading}
+              disabled={loading || isUpdating}
             />
           </View>
         </Card>

@@ -1,0 +1,24 @@
+{
+  "name": "running-tracker",
+  "version": "1.0.0",
+  "description": "Running Tracker App - Full Stack",
+  "scripts": {
+    "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
+    "backend:dev": "cd backend && npm run start:dev",
+    "backend:build": "cd backend && npm run build",
+    "backend:start": "cd backend && npm run start:prod",
+    "backend:install": "cd backend && npm install",
+    "frontend:dev": "cd frontend && npm start",
+    "frontend:web": "cd frontend && npm run web",
+    "frontend:android": "cd frontend && npm run android",
+    "frontend:ios": "cd frontend && npm run ios",
+    "frontend:install": "cd frontend && npm install",
+    "install:all": "npm run backend:install && npm run frontend:install",
+    "clean": "rm -rf backend/node_modules frontend/node_modules backend/dist",
+    "setup": "npm run install:all"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "tsconfig-paths": "^4.2.0"
+  }
+}

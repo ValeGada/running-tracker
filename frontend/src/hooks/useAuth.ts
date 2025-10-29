@@ -9,25 +9,28 @@ export const useAuth = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { isLoggedIn, user, loading } = useSelector((state: RootState) => state.auth);
   
-  // Mock login function
-  const handleLogin = async (email: string, password: string): Promise<boolean> => {
+  // Real login function with backend integration
+  const handleLogin = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       dispatch(setLoading(true));
       
-      // Mock API call
-      const user: User = await authApi.login(email, password);
+      // Real API call to backend
+      const { user } = await authApi.login(email, password);
       
       dispatch(login(user));
-      return true;
-    } catch (error) {
+      return { success: true };
+    } catch (error: any) {
       console.error('Login error:', error);
-      return false;
+      return { 
+        success: false, 
+        error: error.message || 'Login failed. Please try again.' 
+      };
     } finally {
       dispatch(setLoading(false));
     }
   };
   
-  // Mock register function
+  // Real register function with backend integration
   const handleRegister = async (
     name: string,
     email: string,
@@ -36,8 +39,8 @@ export const useAuth = () => {
     try {
       dispatch(setLoading(true));
       
-      // Mock API call
-      const user: User = await authApi.register(name, email, password);
+      // Real API call to backend
+      const { user } = await authApi.register(name, email, password);
       
       dispatch(login(user));
       return true;
@@ -49,7 +52,7 @@ export const useAuth = () => {
     }
   };
   
-  // Mock logout function
+  // Real logout function with backend integration
   const handleLogout = async (): Promise<void> => {
     try {
       await authApi.logout();

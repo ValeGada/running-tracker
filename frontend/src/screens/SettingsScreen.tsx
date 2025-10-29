@@ -1,12 +1,14 @@
 import React from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { StyleSheet, View, ScrollView, Platform } from 'react-native';
 import { Button, Card, Layout, Text, Toggle } from '@ui-kitten/components';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../hooks/useAuth';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store/store';
 
 export const SettingsScreen: React.FC = () => {
   const { user, logout } = useAuth();
+  const insets = useSafeAreaInsets();
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
   const [darkModeEnabled, setDarkModeEnabled] = React.useState(false);
   const [autoStartEnabled, setAutoStartEnabled] = React.useState(false);
@@ -16,7 +18,7 @@ export const SettingsScreen: React.FC = () => {
   };
   
   return (
-    <Layout style={styles.container}>
+    <Layout style={[styles.container, { paddingTop: Platform.OS === 'android' ? Math.max(insets.top, 44) : insets.top }]}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <Text category="h3">Settings</Text>

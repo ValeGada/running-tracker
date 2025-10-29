@@ -1,6 +1,6 @@
-import React from 'react';
-import { StyleSheet, View, KeyboardAvoidingView, Platform } from 'react-native';
-import { Button, Input, Layout, Text } from '@ui-kitten/components';
+import React, { useState } from 'react';
+import { StyleSheet, View, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
+import { Button, Input, Layout, Text, Icon } from '@ui-kitten/components';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,6 +17,9 @@ type Props = NativeStackScreenProps<any, 'Login'>;
 
 export const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const { login, loading } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  
   const {
     control,
     handleSubmit,
@@ -30,11 +33,28 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
   });
   
   const onSubmit = async (data: LoginFormData) => {
-    const success = await login(data.email, data.password);
-    if (success) {
-      // Navigation is handled automatically by the auth state change
+    setLoginError(null); // Clear previous errors
+    const result = await login(data.email, data.password);
+    if (!result.success && result.error) {
+      setLoginError(result.error);
     }
+    // Navigation is handled automatically by the auth state change if successful
   };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const renderPasswordIcon = () => (
+    <TouchableOpacity onPress={togglePasswordVisibility}>
+      <Icon
+        name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+        width={24}
+        height={24}
+        fill="#8F9BB3"
+      />
+    </TouchableOpacity>
+  );
   
   return (
     <KeyboardAvoidingView
@@ -51,6 +71,12 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
           </Text>
           
           <View style={styles.form}>
+            {loginError && (
+              <Text category="c1" status="danger" style={styles.errorText}>
+                {loginError}
+              </Text>
+            )}
+            
             <Controller
               control={control}
               name="email"
@@ -80,7 +106,8 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
                   value={value}
                   onBlur={onBlur}
                   onChangeText={onChange}
-                  secureTextEntry
+                  secureTextEntry={!showPassword}
+                  accessoryRight={renderPasswordIcon}
                   status={errors.password ? 'danger' : 'basic'}
                   caption={errors.password?.message}
                   style={styles.input}
@@ -136,5 +163,9 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 8,
     marginBottom: 16,
+  },
+  errorText: {
+    marginBottom: 16,
+    textAlign: 'center',
   },
 });

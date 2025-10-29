@@ -1,62 +1,77 @@
-import React, { useEffect } from 'react';
-import { StyleSheet, View, FlatList, ScrollView } from 'react-native';
-import { Button, Card, Layout, Text } from '@ui-kitten/components';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View, FlatList, ScrollView, Alert } from 'react-native';
+import { Button, Card, Layout, Text, Modal, Icon } from '@ui-kitten/components';
 import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../store/store';
-import { setRuns } from '../store/runSlice';
+import { RootState, AppDispatch } from '../store/store';
+import { setRuns, deleteRunFromBackend, removeRun } from '../store/runSlice';
+import { runApi } from '../services/api';
 import dayjs from 'dayjs';
 import { Run } from '../types';
+import { TouchableOpacity } from 'react-native';
 
 export const HomeScreen: React.FC = () => {
   const dispatch = useDispatch();
-  const { runs } = useSelector((state: RootState) => state.run);
+  const { runs, loading } = useSelector((state: RootState) => state.run);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [runToDelete, setRunToDelete] = useState<Run | null>(null);
   const { user } = useSelector((state: RootState) => state.auth);
   
-  // Load mock runs data
+  // Load runs from backend
   useEffect(() => {
-    const mockRuns: Run[] = [
-      {
-        id: '1',
-        userId: user?.id || '1',
-        startTime: Date.now() - 86400000,
-        endTime: Date.now() - 84600000,
-        distance: 5.2,
-        duration: 1800,
-        averagePace: 5.77,
-        maxSpeed: 12.5,
-        calories: 350,
-        route: [],
-        status: 'completed',
-      },
-      {
-        id: '2',
-        userId: user?.id || '1',
-        startTime: Date.now() - 172800000,
-        endTime: Date.now() - 170400000,
-        distance: 8.5,
-        duration: 2700,
-        averagePace: 5.29,
-        maxSpeed: 14.2,
-        calories: 580,
-        route: [],
-        status: 'completed',
-      },
-      {
-        id: '3',
-        userId: user?.id || '1',
-        startTime: Date.now() - 259200000,
-        endTime: Date.now() - 256800000,
-        distance: 3.8,
-        duration: 1320,
-        averagePace: 5.79,
-        maxSpeed: 11.8,
-        calories: 260,
-        route: [],
-        status: 'completed',
-      },
-    ];
-    
-    dispatch(setRuns(mockRuns));
+    const loadRuns = async () => {
+      try {
+        const runs = await runApi.getRuns();
+        dispatch(setRuns(runs));
+      } catch (error) {
+        console.error('Failed to load runs:', error);
+        // Fallback to mock data if backend is not available
+        const mockRuns: Run[] = [
+          {
+            id: '1',
+            userId: user?.id || '1',
+            startTime: Date.now() - 86400000,
+            endTime: Date.now() - 84600000,
+            distance: 5.2,
+            duration: 1800,
+            averagePace: 5.77,
+            maxSpeed: 12.5,
+            calories: 350,
+            route: [],
+            status: 'completed',
+          },
+          {
+            id: '2',
+            userId: user?.id || '1',
+            startTime: Date.now() - 172800000,
+            endTime: Date.now() - 170400000,
+            distance: 8.5,
+            duration: 2700,
+            averagePace: 5.29,
+            maxSpeed: 14.2,
+            calories: 580,
+            route: [],
+            status: 'completed',
+          },
+          {
+            id: '3',
+            userId: user?.id || '1',
+            startTime: Date.now() - 259200000,
+            endTime: Date.now() - 256800000,
+            distance: 3.8,
+            duration: 1320,
+            averagePace: 5.79,
+            maxSpeed: 11.8,
+            calories: 260,
+            route: [],
+            status: 'completed',
+          },
+        ];
+        
+        dispatch(setRuns(mockRuns));
+      }
+    };
+
+    loadRuns();
   }, [dispatch, user]);
   
   const formatDuration = (seconds: number): string => {
@@ -65,26 +80,60 @@ export const HomeScreen: React.FC = () => {
     const secs = seconds % 60;
     
     if (hours > 0) {
-      return `${hours}h ${minutes}m`;
+      return `${hours}h ${minutes}m ${secs}s`;
     }
     return `${minutes}m ${secs}s`;
   };
-  
+
+  const handleDeleteRun = (run: Run) => {
+    setRunToDelete(run);
+    setDeleteModalVisible(true);
+  };
+
+  const confirmDeleteRun = async () => {
+    if (!runToDelete) return;
+    
+    try {
+      await dispatch(deleteRunFromBackend(runToDelete.id) as any);
+      setDeleteModalVisible(false);
+      setRunToDelete(null);
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo eliminar la sesión de running');
+    }
+  };
+
+  const cancelDeleteRun = () => {
+    setDeleteModalVisible(false);
+    setRunToDelete(null);
+  };
+
   const renderRunCard = ({ item }: { item: Run }) => (
     <Card style={styles.card}>
       <View style={styles.cardHeader}>
-        <Text category="h6">
-          {dayjs(item.startTime).format('MMM DD, YYYY')}
-        </Text>
-        <Text category="c1" appearance="hint">
-          {dayjs(item.startTime).format('HH:mm')}
-        </Text>
+        <View style={styles.cardContent}>
+          <Text category="h6">
+            {dayjs(item.startTime).format('MMM DD, YYYY')}
+          </Text>
+          <Text category="c1" appearance="hint">
+            {dayjs(item.startTime).format('HH:mm')}
+          </Text>
+        </View>
+        <TouchableOpacity 
+          style={styles.deleteButton}
+          onPress={() => handleDeleteRun(item)}
+        >
+          <Icon 
+            name="trash-2-outline" 
+            style={styles.deleteIcon} 
+            fill="#FF3D71"
+          />
+        </TouchableOpacity>
       </View>
       
       <View style={styles.statsRow}>
         <View style={styles.stat}>
           <Text category="h5" style={styles.statValue}>
-            {item.distance.toFixed(2)}
+            {item.distance?.toFixed(2) || '0.00'}
           </Text>
           <Text category="c1" appearance="hint">
             km
@@ -102,7 +151,7 @@ export const HomeScreen: React.FC = () => {
         
         <View style={styles.stat}>
           <Text category="h5" style={styles.statValue}>
-            {item.averagePace.toFixed(2)}
+            {item.averagePace?.toFixed(2) || '0.00'}
           </Text>
           <Text category="c1" appearance="hint">
             min/km
@@ -147,6 +196,42 @@ export const HomeScreen: React.FC = () => {
           contentContainerStyle={styles.listContent}
         />
       )}
+
+      <Modal
+        visible={deleteModalVisible}
+        backdropStyle={styles.backdrop}
+        onBackdropPress={cancelDeleteRun}
+      >
+        <Card disabled={true} style={styles.modal}>
+          <Text category="h6" style={styles.modalTitle}>
+            Confirmar eliminación
+          </Text>
+          <Text category="s1" style={styles.modalText}>
+            ¿Estás seguro de que quieres eliminar esta sesión de running?
+          </Text>
+          {runToDelete && (
+            <Text category="s2" style={styles.modalRunInfo}>
+              {dayjs(runToDelete.startTime).format('DD/MM/YYYY HH:mm')} - {formatDuration(runToDelete.duration)}
+            </Text>
+          )}
+          <View style={styles.modalButtons}>
+            <Button
+              style={styles.modalButton}
+              appearance="ghost"
+              onPress={cancelDeleteRun}
+            >
+              Cancelar
+            </Button>
+            <Button
+              style={styles.modalButton}
+              status="danger"
+              onPress={confirmDeleteRun}
+            >
+              Eliminar
+            </Button>
+          </View>
+        </Card>
+      </Modal>
     </Layout>
   );
 };
@@ -169,8 +254,46 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+  },
+  cardContent: {
+    flex: 1,
+  },
+  deleteButton: {
+    padding: 8,
+    marginLeft: 10,
+  },
+  deleteIcon: {
+    width: 24,
+    height: 24,
+  },
+  backdrop: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modal: {
+    margin: 20,
+    padding: 20,
+  },
+  modalTitle: {
     marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalText: {
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalRunInfo: {
+    marginBottom: 20,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  modalButton: {
+    flex: 1,
+    marginHorizontal: 8,
   },
   statsRow: {
     flexDirection: 'row',

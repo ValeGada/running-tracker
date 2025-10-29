@@ -34,7 +34,7 @@ export const RunCard: React.FC<RunCardProps> = ({ run, onPress }) => {
       <View style={styles.stats}>
         <View style={styles.stat}>
           <Text category="h5" style={styles.statValue}>
-            {run.distance.toFixed(2)}
+            {run.distance?.toFixed(2) || '0.00'}
           </Text>
           <Text category="c1" appearance="hint">
             km
@@ -52,7 +52,7 @@ export const RunCard: React.FC<RunCardProps> = ({ run, onPress }) => {
         
         <View style={styles.stat}>
           <Text category="h5" style={styles.statValue}>
-            {run.averagePace.toFixed(2)}
+            {run.averagePace?.toFixed(2) || '0.00'}
           </Text>
           <Text category="c1" appearance="hint">
             min/km

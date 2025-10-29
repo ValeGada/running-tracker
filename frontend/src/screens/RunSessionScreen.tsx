@@ -1,19 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Platform } from 'react-native';
 import { Button, Layout, Text } from '@ui-kitten/components';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../store/store';
-import { startRun, stopRun, pauseRun, resumeRun } from '../store/runSlice';
+import { RootState, AppDispatch } from '../store/store';
+import { startRun, stopRun, pauseRun, resumeRun, saveRunToBackend } from '../store/runSlice';
 import { useLocationTracking } from '../hooks/useLocationTracking';
 import { Run } from '../types';
-import MapView, { Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
+import MapView, { Polyline, PROVIDER_DEFAULT, Region } from 'react-native-maps';
 
 export const RunSessionScreen: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
+  const insets = useSafeAreaInsets();
   const { currentRun, isTracking } = useSelector((state: RootState) => state.run);
   const { user } = useSelector((state: RootState) => state.auth);
-  const { permissionGranted } = useLocationTracking();
+  const { permissionGranted, currentLocation } = useLocationTracking();
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [mapRegion, setMapRegion] = useState<Region>({
+    latitude: 37.78825,
+    longitude: -122.4324,
+    latitudeDelta: 0.005,  // Más zoom (menor valor = más zoom)
+    longitudeDelta: 0.005, // Más zoom (menor valor = más zoom)
+  });
   
   // Timer effect
   useEffect(() => {
@@ -30,6 +38,31 @@ export const RunSessionScreen: React.FC = () => {
       if (interval) clearInterval(interval);
     };
   }, [isTracking, currentRun]);
+
+  // Update map region when user location changes
+  useEffect(() => {
+    if (currentLocation) {
+      setMapRegion({
+        latitude: currentLocation.latitude,
+        longitude: currentLocation.longitude,
+        latitudeDelta: 0.005,  // Más zoom para seguimiento de ubicación
+        longitudeDelta: 0.005, // Más zoom para seguimiento de ubicación
+      });
+    }
+  }, [currentLocation]);
+
+  // Center map on route when run starts
+  useEffect(() => {
+    if (currentRun && currentRun.route.length > 0) {
+      const lastLocation = currentRun.route[currentRun.route.length - 1];
+      setMapRegion({
+        latitude: lastLocation.latitude,
+        longitude: lastLocation.longitude,
+        latitudeDelta: 0.005,  // Más zoom para seguimiento de ruta
+        longitudeDelta: 0.005, // Más zoom para seguimiento de ruta
+      });
+    }
+  }, [currentRun?.route]);
   
   const handleStart = () => {
     const newRun: Run = {
@@ -50,7 +83,21 @@ export const RunSessionScreen: React.FC = () => {
   };
   
   const handleStop = () => {
-    dispatch(stopRun());
+    if (currentRun) {
+      const completedRun = {
+        ...currentRun,
+        endTime: Date.now(),
+        duration: elapsedTime,
+        status: 'completed' as const,
+      };
+      
+      // First stop the run (clears currentRun)
+      dispatch(stopRun());
+      
+      // Then save to backend (which will add to runs array)
+      dispatch(saveRunToBackend(completedRun));
+    }
+    
     setElapsedTime(0);
   };
   
@@ -83,25 +130,28 @@ export const RunSessionScreen: React.FC = () => {
   const calculateSpeed = (): string => {
     if (!currentRun || elapsedTime === 0) return '0.0';
     const speed = (currentRun.distance / (elapsedTime / 3600));
+    return formatSpeed(speed);
+  };
+  
+  const formatSpeed = (speed: number | undefined): string => {
+    if (!speed || isNaN(speed)) return '0.0';
     return speed.toFixed(1);
   };
   
   return (
-    <Layout style={styles.container}>
+    <Layout style={[styles.container, { paddingTop: Platform.OS === 'android' ? Math.max(insets.top, 44) : insets.top }]}>
       <View style={styles.mapContainer}>
         <MapView
           style={styles.map}
           provider={PROVIDER_DEFAULT}
-          initialRegion={{
-            latitude: 37.78825,
-            longitude: -122.4324,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          }}
+          region={mapRegion}
           showsUserLocation
           followsUserLocation
+          showsMyLocationButton
+          showsCompass
+          onRegionChangeComplete={setMapRegion}
         >
-          {currentRun && currentRun.route.length > 0 && (
+          {currentRun && currentRun.route && currentRun.route.length > 1 && (
             <Polyline
               coordinates={currentRun.route.map((loc) => ({
                 latitude: loc.latitude,
@@ -109,6 +159,8 @@ export const RunSessionScreen: React.FC = () => {
               }))}
               strokeColor="#DC3760"
               strokeWidth={4}
+              lineCap="round"
+              lineJoin="round"
             />
           )}
         </MapView>
@@ -117,8 +169,8 @@ export const RunSessionScreen: React.FC = () => {
       <View style={styles.statsContainer}>
         <View style={styles.mainStat}>
           <Text category="h1" style={styles.mainStatValue}>
-            {currentRun ? currentRun.distance.toFixed(2) : '0.00'}
-          </Text>
+                  {currentRun ? (currentRun.distance?.toFixed(2) || '0.00') : '0.00'}
+                </Text>
           <Text category="s1" appearance="hint">
             kilometers
           </Text>

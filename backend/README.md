@@ -14,7 +14,7 @@ Backend API para la aplicación móvil Running Tracker, desarrollado con NestJS,
 
 ## 📁 Estructura del proyecto
 
-backend/
+`backend/
 ├── src/
 │   ├── modules/
 │   │   ├── auth/           # Autenticación y autorización
@@ -25,7 +25,7 @@ backend/
 │   └── main.ts            # Punto de entrada
 ├── docker-compose.yml      # Configuración Docker
 ├── Dockerfile             # Imagen Docker
-└── README.md
+└── README.md`
 
 
 ## 🛠️ Instalación y configuración
